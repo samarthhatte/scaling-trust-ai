@@ -21,15 +21,19 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def serve_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# CORS for frontend-backend connection
+# Allow your frontend domain
+origins = [
+    "https://hackers.kesug.com",  # your frontend domain
+    "http://localhost:3000",      # optional for local testing
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://hackers.kesug.com"],  # 👈 Your frontend domain
+    allow_origins=origins,             # domains allowed to access the backend
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],               # allow all HTTP methods
+    allow_headers=["*"],               # allow all headers
 )
-
 # Gemini model setup
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0)
 
