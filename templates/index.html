@@ -111,30 +111,42 @@
         document.getElementById(outputId).textContent = "Selected File: " + fileName;
     }
 
-    async function sendFile(endpoint, file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        
-        const response = await fetch(endpoint, {
-            method: "POST",
-            body: formData
-        });
+    function sendFile(url, file) {
+    const formData = new FormData();
+    formData.append("file", file);
 
-        const data = await response.json();
-        alert("Category: " + (data.category || data.message));
-    }
-
-    document.getElementById('fileInputText').addEventListener('change', function() {
-        sendFile("http://localhost:8000/analyze/text", this.files[0]);
+    fetch(url, {
+        method: "POST",
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Failed to analyze file");
+        return response.json();
+    })
+    .then(data => {
+        console.log("Analysis result:", data);
+        document.getElementById("result").textContent = data.category || "Unknown";
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Something went wrong. See console for details.");
     });
+}
 
-    document.getElementById('fileInputImage').addEventListener('change', function() {
-        sendFile("http://localhost:8000/analyze/image", this.files[0]);
-    });
+const backendBase = "https://your-backend-name.onrender.com"; // ✅ Replace this with your backend Render URL
 
-    document.getElementById('fileInputVideo').addEventListener('change', function() {
-        sendFile("http://localhost:8000/analyze/video", this.files[0]);
-    });
+document.getElementById('fileInputText').addEventListener('change', function() {
+    sendFile(`${backendBase}/analyze/text`, this.files[0]);
+});
+
+document.getElementById('fileInputImage').addEventListener('change', function() {
+    sendFile(`${backendBase}/analyze/image`, this.files[0]);
+});
+
+document.getElementById('fileInputVideo').addEventListener('change', function() {
+    sendFile(`${backendBase}/analyze/video`, this.files[0]);
+});
+
 
 </script>
 
