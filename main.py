@@ -24,7 +24,7 @@ async def serve_home(request: Request):
 # CORS for frontend-backend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or use ["*"] temporarily
+    allow_origins=["https://hackers.kesug.com"],  # 👈 Your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

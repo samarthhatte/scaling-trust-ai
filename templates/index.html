@@ -89,7 +89,7 @@
         formData.append("file", file);
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/analyze/image", {
+            const response = await fetch("https://scaling-trust-ai.onrender.com/analyze/image", {
                 method: "POST",
                 body: formData
             });
@@ -100,7 +100,7 @@
 
             const result = await response.json();
 
-            fileNameDisplay.textContent = "✅ ${file.name} uploaded successfully. Category: ${result.category}";
+            fileNameDisplay.textContent = `✅ ${file.name} uploaded successfully. Category: ${result.category}`;
         } catch (error) {
             fileNameDisplay.textContent = "❌ Error: " + error.message;
         }
@@ -136,16 +136,14 @@
 const backendBase = "https://your-backend-name.onrender.com"; // ✅ Replace this with your backend Render URL
 
 document.getElementById('fileInputText').addEventListener('change', function() {
-    sendFile(`${backendBase}/analyze/text`, this.files[0]);
+    sendFile("https://scaling-trust-ai.onrender.com/analyze/image", this.files[0]);
 });
 
-document.getElementById('fileInputImage').addEventListener('change', function() {
-    sendFile(`${backendBase}/analyze/image`, this.files[0]);
-});
 
 document.getElementById('fileInputVideo').addEventListener('change', function() {
-    sendFile(`${backendBase}/analyze/video`, this.files[0]);
+    sendFile("https://scaling-trust-ai.onrender.com/analyze/image", this.files[0]);
 });
+
 
 
 </script>
