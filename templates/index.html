@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scaling Trust: AI-Powered Detection of Online Harms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    
+    <!-- Hero Section -->
+    <header class="bg-blue-600 text-white py-16 text-center shadow-lg">
+        <h1 class="text-4xl font-bold">Scaling Trust: AI-Powered Detection of Online Harms</h1>
+        <p class="mt-3 text-lg">Building a safer internet through AI-driven content moderation.</p>
+    </header>
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md p-4 sticky top-0 z-50">
+        <ul class="flex justify-center space-x-6">
+            <li><a href="#problem" class="hover:text-blue-600 font-medium">Problem</a></li>
+            <li><a href="#solution" class="hover:text-blue-600 font-medium">Solution</a></li>
+            <li><a href="#technology" class="hover:text-blue-600 font-medium">Technology</a></li>
+            <li><a href="#implementation" class="hover:text-blue-600 font-medium">Implementation</a></li>
+            <li><a href="#contact" class="hover:text-blue-600 font-medium">Contact</a></li>
+        </ul>
+    </nav>
+    
+    <!-- Problem Section -->
+    <section id="problem" class="max-w-5xl mx-auto p-10">
+        <h2 class="text-3xl font-semibold text-center mb-6">The Problem</h2>
+        <p class="text-gray-700 text-lg text-center">The rise of online platforms has led to an increase in harmful content such as hate speech, cyberbullying, misinformation, and explicit media. Manual moderation is slow and inefficient, making AI-powered solutions essential.</p>
+    </section>
+    
+<!-- Solution Section -->
+<section id="solution" class="bg-blue-50 py-16">
+    <div class="max-w-5xl mx-auto text-center">
+        <h2 class="text-3xl font-semibold mb-6">Our AI-Powered Solution</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Text Analysis (Clickable) -->
+            <div class="flex flex-col items-center bg-white p-6 rounded-lg shadow-lg h-full">
+                <button onclick="document.getElementById('fileInputText').click()" class="focus:outline-none w-full">
+                    <h3 class="text-xl font-semibold mb-3">Text Analysis</h3>
+                    <p class="text-gray-700">AI models detect hate speech, misinformation, and toxicity in real-time.</p>
+                </button>
+                <input type="file" id="fileInputText" class="hidden" accept=".txt,.csv,.json" onchange="displayFileName(this, 'textFileName')">
+                <p id="textFileName" class="text-gray-500 mt-2"></p>
+            </div>
+
+            <!-- Image Recognition (Clickable) -->
+           <div class="flex flex-col items-center bg-white p-6 rounded-lg shadow-lg h-full">
+    <button onclick="document.getElementById('fileInputImage').click()" class="focus:outline-none w-full">
+        <h3 class="text-xl font-semibold mb-3">Image Recognition</h3>
+        <p class="text-gray-700">Deep learning models scan images for explicit content and hate symbols.</p>
+    </button>
+    <input type="file" id="fileInputImage" class="hidden" accept="image/*" onchange="uploadImage()">
+    <p id="imageFileName" class="text-gray-500 mt-2"></p>
+</div>
+
+
+            <!-- Video Moderation (Clickable) -->
+            <div class="flex flex-col items-center bg-white p-6 rounded-lg shadow-lg h-full">
+                <button onclick="document.getElementById('fileInputVideo').click()" class="focus:outline-none w-full">
+                    <h3 class="text-xl font-semibold mb-3">Video Moderation</h3>
+                    <p class="text-gray-700">Frame-by-frame analysis and audio transcription for harmful content detection.</p>
+                </button>
+                <input type="file" id="fileInputVideo" class="hidden" accept="video/*" onchange="displayFileName(this, 'videoFileName')">
+                <p id="videoFileName" class="text-gray-500 mt-2"></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript for File Name Display -->
+<script>
+    async function uploadImage() {
+        const input = document.getElementById('fileInputImage');
+        const file = input.files[0];
+        const fileNameDisplay = document.getElementById('imageFileName');
+
+        if (!file) {
+            fileNameDisplay.textContent = "Please select an image.";
+            return;
+        }
+
+        // Display uploading message + file name
+        fileNameDisplay.textContent = "Uploading: " + file.name + " (please wait...)";
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/analyze/image", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error ("Server error. Failed to analyze the image.");
+            }
+
+            const result = await response.json();
+
+            fileNameDisplay.textContent = "✅ ${file.name} uploaded successfully. Category: ${result.category}";
+        } catch (error) {
+            fileNameDisplay.textContent = "❌ Error: " + error.message;
+        }
+    }
+
+    function displayFileName(input, outputId) {
+        const fileName = input.files.length > 0 ? input.files[0].name: "No file selected";
+        document.getElementById(outputId).textContent = "Selected File: " + fileName;
+    }
+
+    async function sendFile(endpoint, file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const response = await fetch(endpoint, {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+        alert("Category: " + (data.category || data.message));
+    }
+
+    document.getElementById('fileInputText').addEventListener('change', function() {
+        sendFile("http://localhost:8000/analyze/text", this.files[0]);
+    });
+
+    document.getElementById('fileInputImage').addEventListener('change', function() {
+        sendFile("http://localhost:8000/analyze/image", this.files[0]);
+    });
+
+    document.getElementById('fileInputVideo').addEventListener('change', function() {
+        sendFile("http://localhost:8000/analyze/video", this.files[0]);
+    });
+
+</script>
+
+
+    
+    <!-- Implementation Section -->
+    <section id="implementation" class="bg-gray-100 py-16">
+        <div class="max-w-5xl mx-auto text-center">
+            <h2 class="text-3xl font-semibold mb-6">Implementation Steps</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-3">Data Collection</h3>
+                    <p class="text-gray-700">Curating datasets like HateXplain, Hateful Memes, and YouTube-8M.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-3">Model Training</h3>
+                    <p class="text-gray-700">Fine-tuning BERT, CLIP, and YOLOv8 for content moderation.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-3">Integration</h3>
+                    <p class="text-gray-700">Building scalable APIs to process user-generated content in real-time.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-3">Deployment</h3>
+                    <p class="text-gray-700">Deploying AI models on cloud infrastructure for real-world use.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contact Section -->
+    <section id="contact" class="max-w-5xl mx-auto p-10 text-center">
+        <h2 class="text-3xl font-semibold mb-6">Get in Touch</h2>
+        <p class="text-gray-700 mb-4">Want to learn more? Contact us for collaborations or inquiries.</p>
+        <a href="mailto:contact@ai-trust.com" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-700">Email Us</a>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-blue-600 text-white text-center py-4 mt-10">
+        <p>&copy; 2025 AI Trust Detection Project</p>
+    </footer>
+    
+</body>
+</html>
+
+
