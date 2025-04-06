@@ -4,6 +4,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 import base64
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
@@ -23,7 +24,7 @@ async def serve_home(request: Request):
 # CORS for frontend-backend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  #Ideally, use your frontend actual origin in production
+    allow_origins=["https://hackers.kesug.com"],  # Or use ["*"] for testing, but not recommended for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +44,8 @@ async def analyze_image(file: UploadFile = File(...)):
             {"type": "image_url", "image_url": f"data:image/jpeg;base64,{image_base64}"}
         ]
     )
+
+
 
     response = llm.invoke([prompt])
     return {"category": response.content}
