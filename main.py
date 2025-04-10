@@ -11,7 +11,6 @@ from starlette.templating import Jinja2Templates
 import os
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
 
-
 app = FastAPI()
 
 # Point to the templates folder
