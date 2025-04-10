@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+from fastapi import Request
+import httpx
 import os
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
 
@@ -55,3 +57,36 @@ async def analyze_image(file: UploadFile = File(...)):
 
     response = llm.invoke([prompt])
     return {"category": response.content}
+
+
+
+@app.post("/api/ask")
+async def ask_gemini(request: Request):
+    body = await request.json()
+    prompt = body.get("prompt")
+
+    if not prompt:
+        return {"message": "Prompt is missing."}
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
+
+    payload = {
+        "contents": [
+            {
+                "parts": [{"text": prompt}]
+            }
+        ]
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=payload)
+        data = response.json()
+
+    message = (
+        data.get("candidates", [{}])[0]
+        .get("content", {})
+        .get("parts", [{}])[0]
+        .get("text", "No response from Gemini")
+    )
+
+    return {"message": message}
