@@ -8,6 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+import os
+os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
+
 
 app = FastAPI()
 
