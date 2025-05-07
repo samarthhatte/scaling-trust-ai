@@ -9,6 +9,7 @@ from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from fastapi import Request
+from fastapi import UploadFile, File, Form
 import httpx
 import os
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
@@ -58,8 +59,6 @@ async def analyze_image(file: UploadFile = File(...)):
     response = llm.invoke([prompt])
     return {"category": response.content}
 
-
-
 @app.post("/api/ask")
 async def ask_gemini(request: Request):
     body = await request.json()
@@ -90,3 +89,25 @@ async def ask_gemini(request: Request):
     )
 
     return {"message": message}
+
+
+@app.post("/api/ask-with-image")
+async def ask_with_image(
+    file: UploadFile = File(...),
+    prompt: str = Form(...)
+):
+    image_bytes = await file.read()
+    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+    # Create a Gemini message with both image and prompt
+    combined_prompt = HumanMessage(
+        content=[
+            {"type": "text", "text": prompt},
+            {"type": "image_url", "image_url": f"data:image/jpeg;base64,{image_base64}"}
+        ]
+    )
+
+    response = llm.invoke([combined_prompt])
+    answer = response.content
+
+    return {"response": answer}
