@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 import base64
+import pdfplumber
+from docx import Document
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
@@ -34,7 +36,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,             # domains allowed to access the backend
+    allow_origins=origins,             # domains allowed accessing the backend
     allow_credentials=True,
     allow_methods=["*"],               # allow all HTTP methods
     allow_headers=["*"],               # allow all headers
@@ -111,3 +113,60 @@ async def ask_with_image(
     answer = response.content
 
     return {"response": answer}
+
+
+@app.post("/api/ask-with-doc")
+async def ask_with_doc(
+        file: UploadFile = File(...),
+        prompt: str = Form(...)
+):
+    extension = file.filename.lower().split('.')[-1]
+    file_bytes = await file.read()
+
+    # Extract text from the uploaded document
+    extracted_text = ""
+
+    if extension == "txt":
+        extracted_text = file_bytes.decode("utf-8", errors="ignore")
+
+    elif extension == "pdf":
+        with open("temp.pdf", "wb") as f:
+            f.write(file_bytes)
+        with pdfplumber.open("temp.pdf") as pdf:
+            extracted_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        os.remove("temp.pdf")
+
+    elif extension in ["doc", "docx"]:
+        with open("temp.docx", "wb") as f:
+            f.write(file_bytes)
+        doc = Document("temp.docx")
+        extracted_text = "\n".join([para.text for para in doc.paragraphs])
+        os.remove("temp.docx")
+
+    else:
+        return {"message": f"Unsupported file type: {extension}"}
+
+    full_prompt = f"{prompt}\n\n[Document Text]:\n{extracted_text}"
+
+    # Gemini API call
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
+    payload = {
+        "contents": [
+            {
+                "parts": [{"text": full_prompt}]
+            }
+        ]
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=payload)
+        data = response.json()
+
+    message = (
+        data.get("candidates", [{}])[0]
+        .get("content", {})
+        .get("parts", [{}])[0]
+        .get("text", "No response from Gemini")
+    )
+
+    return {"message": message}
