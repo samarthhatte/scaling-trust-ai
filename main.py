@@ -74,7 +74,7 @@ async def ask_gemini(request: Request):
     payload = {
         "contents": [
             {
-                "parts": [{"text": prompt}]
+                "parts": [{"text": f"You are a helpful healthcare assistant. Answer the following healthcare-related question:\n\n{prompt}"}]
             }
         ]
     }
@@ -104,7 +104,7 @@ async def ask_with_image(
     # Create a Gemini message with both image and prompt
     combined_prompt = HumanMessage(
         content=[
-            {"type": "text", "text": prompt},
+            {"type": "text", "text": f"You are a helpful healthcare assistant. Analyze the following image and answer the question based on it:\n\nQuestion: {prompt}"},
             {"type": "image_url", "image_url": f"data:image/jpeg;base64,{image_base64}"}
         ]
     )
@@ -146,7 +146,7 @@ async def ask_with_doc(
     else:
         return {"message": f"Unsupported file type: {extension}"}
 
-    full_prompt = f"{prompt}\n\n[Document Text]:\n{extracted_text}"
+    full_prompt =  f"You are a helpful healthcare assistant. Answer the following question based on the provided document:\n\n{prompt}\n\n[Document Text]:\n{extracted_text}"
 
     # Gemini API call
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
