@@ -14,6 +14,17 @@ from fastapi import Request
 from fastapi import UploadFile, File, Form
 import httpx
 import os
+from fastapi import APIRouter, UploadFile, File, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+import whisper
+import tempfile
+import uuid
+import os
+import pyttsx3
+from pydub import AudioSegment
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
 
 app = FastAPI()
@@ -42,7 +53,7 @@ app.add_middleware(
     allow_headers=["*"],               # allow all headers
 )
 # Gemini model setup
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
 
 @app.post("/analyze/image")
 async def analyze_image(file: UploadFile = File(...)):
