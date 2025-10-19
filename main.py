@@ -20,8 +20,6 @@ from fastapi.responses import FileResponse
 import tempfile
 import uuid
 import os
-import pyttsx3
-from pydub import AudioSegment
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
