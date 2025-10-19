@@ -17,7 +17,6 @@ import os
 from fastapi import APIRouter, UploadFile, File, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import whisper
 import tempfile
 import uuid
 import os
