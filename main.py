@@ -121,6 +121,33 @@ async def ask_with_image(
 
     return {"response": answer}
 
+@app.post("/api/mental-support-chat")
+async def mental_support_chat(request: Request):
+    data = await request.json()
+    user_message = data.get("query", "")
+
+    # Safety fallbacks
+    if not user_message or user_message.strip() == "":
+        return {"response": "I'm here with you. Could you share what's on your mind?"}
+
+    prompt = [
+        {"role": "system", "content": """
+You are a warm, empathetic mental wellness support companion.
+Your tone is gentle, comforting, and human-like.
+Listen deeply, validate feelings, and respond with kindness.
+Do NOT diagnose or suggest medications.
+Encourage open expression and emotional awareness.
+Keep replies short, soothing, and supportive.
+Avoid sounding robotic or formal.
+"""},
+        {"role": "user", "content": user_message}
+    ]
+
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    reply = model.generate_content(prompt)
+
+    return {"response": reply.text.strip()}
+
 
 @app.post("/api/ask-with-doc")
 async def ask_with_doc(
