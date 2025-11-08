@@ -127,7 +127,6 @@ async def ask_with_image(
 
 from typing import List, Literal
 from pydantic import BaseModel
-import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
