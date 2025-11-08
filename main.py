@@ -139,8 +139,42 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
 
+
+from typing import List, Literal
+from pydantic import BaseModel
+import google.generativeai as genai
+from fastapi import APIRouter, UploadFile, File, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+import os
+
+
+# Assuming genai.configure is called earlier in your file
+# genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# --- Pydantic Models for Request Body ---
+
+class ChatMessage(BaseModel):
+    # Role must be "user" or "assistant"
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatRequest(BaseModel):
+    # This list will contain the entire conversation history
+    messages: List[ChatMessage]
+
+
+# --- The FastAPI Endpoint ---
+
 @app.post("/api/mental-support-chat")
 async def mental_support_chat(request: ChatRequest):
+    """
+    Handles a continuous, empathetic mental wellness conversation
+    by sending the full message history to the Gemini model.
+    """
+
+    # 1. Define the System Persona
+    # The system message sets the context and rules for the AI.
     conversation = [
         {
             "role": "system",
@@ -155,17 +189,28 @@ You are a warm, empathetic mental wellness companion.
         }
     ]
 
-    # Append conversation history
+    # 2. Append Conversation History
+    # The frontend sends 'user' and 'assistant' roles, which map directly to the model's roles.
     for msg in request.messages:
-        role = "user" if msg.role == "user" else "assistant"
+        # Note: The Google GenAI SDK expects 'user' and 'model' for multi-turn chat.
+        # Since your Pydantic model uses 'assistant', we map it here:
+        role = "user" if msg.role == "user" else "model"
         conversation.append({"role": role, "content": msg.content})
 
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    response = model.generate_content(conversation)
+    # 3. Call the Gemini Model
+    try:
+        model = genai.GenerativeModel("gemini-2.5-flash")  # Updated to 2.5-flash for better performance/reasoning
 
-    reply_text = response.text.strip() if response else "I'm here for you. Tell me more."
+        # Generate content with the full history including the system prompt
+        response = model.generate_content(conversation)
 
-    return {"response": reply_text}
+        reply_text = response.text.strip() if response else "I'm here for you. Tell me more."
+
+        return {"response": reply_text}
+
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        return {"response": "I'm having a little trouble connecting right now. Could you please try again in a moment?"}
 
 
 
