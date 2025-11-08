@@ -167,7 +167,6 @@ You are a warm, empathetic mental wellness companion.
     return {"response": reply_text}
 
 
-
 @app.post("/api/ask-with-doc")
 async def ask_with_doc(
         file: UploadFile = File(...),
