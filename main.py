@@ -2,6 +2,9 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
+from typing import List, Literal
+from pydantic import BaseModel
+import google.generativeai as genai
 import base64
 import pdfplumber
 from docx import Document
@@ -20,6 +23,7 @@ from fastapi.responses import FileResponse
 import tempfile
 import uuid
 import os
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
@@ -121,32 +125,47 @@ async def ask_with_image(
 
     return {"response": answer}
 
+from typing import List, Literal
+from pydantic import BaseModel
+import google.generativeai as genai
+
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+
 @app.post("/api/mental-support-chat")
-async def mental_support_chat(request: Request):
-    data = await request.json()
-    user_message = data.get("query", "")
-
-    # Safety fallbacks
-    if not user_message or user_message.strip() == "":
-        return {"response": "I'm here with you. Could you share what's on your mind?"}
-
-    prompt = [
-        {"role": "system", "content": """
-You are a warm, empathetic mental wellness support companion.
-Your tone is gentle, comforting, and human-like.
-Listen deeply, validate feelings, and respond with kindness.
-Do NOT diagnose or suggest medications.
-Encourage open expression and emotional awareness.
-Keep replies short, soothing, and supportive.
-Avoid sounding robotic or formal.
-"""},
-        {"role": "user", "content": user_message}
+async def mental_support_chat(request: ChatRequest):
+    conversation = [
+        {
+            "role": "system",
+            "content": """
+You are a warm, empathetic mental wellness companion.
+• Speak gently, like a caring friend.
+• Validate emotions and encourage expression.
+• Avoid clinical language and diagnoses.
+• Never suggest medication.
+• Keep responses ~1–3 short paragraphs.
+"""
+        }
     ]
 
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    reply = model.generate_content(prompt)
+    # Append conversation history
+    for msg in request.messages:
+        role = "user" if msg.role == "user" else "assistant"
+        conversation.append({"role": role, "content": msg.content})
 
-    return {"response": reply.text.strip()}
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    response = model.generate_content(conversation)
+
+    reply_text = response.text.strip() if response else "I'm here for you. Tell me more."
+
+    return {"response": reply_text}
+
 
 
 @app.post("/api/ask-with-doc")
