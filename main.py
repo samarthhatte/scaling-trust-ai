@@ -4,7 +4,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 from typing import List, Literal
 from pydantic import BaseModel
-import google.generativeai as genai
 import base64
 import pdfplumber
 from docx import Document
