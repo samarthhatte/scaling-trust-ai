@@ -54,7 +54,7 @@ app.add_middleware(
     allow_headers=["*"],               # allow all headers
 )
 # Gemini model setup
-llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
 
 @app.post("/analyze/image")
 async def analyze_image(file: UploadFile = File(...)):
@@ -81,7 +81,8 @@ async def ask_gemini(request: Request):
     if not prompt:
         return {"message": "Prompt is missing."}
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
+
     payload = {
         "contents": [
             {
@@ -202,7 +203,7 @@ async def ask_with_doc(
     full_prompt =  f"You are a helpful healthcare assistant. Answer the following question based on the provided document:\n\n{prompt}\n\n[Document Text]:\n{extracted_text}"
 
     # Gemini API call
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
     payload = {
         "contents": [
             {
