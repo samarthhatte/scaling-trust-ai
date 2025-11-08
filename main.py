@@ -4,6 +4,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 from typing import List, Literal
 from pydantic import BaseModel
+import google.generativeai as genai
 import base64
 import pdfplumber
 from docx import Document
@@ -126,6 +127,7 @@ async def ask_with_image(
 
 from typing import List, Literal
 from pydantic import BaseModel
+import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
@@ -163,6 +165,7 @@ You are a warm, empathetic mental wellness companion.
     reply_text = response.text.strip() if response else "I'm here for you. Tell me more."
 
     return {"response": reply_text}
+
 
 
 @app.post("/api/ask-with-doc")
