@@ -1,32 +1,18 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage
-from typing import List, Literal
-from pydantic import BaseModel
-import google.generativeai as genai
-import base64
-import pdfplumber
-from docx import Document
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
-from fastapi import Request
-from fastapi import UploadFile, File, Form
+import os
 import httpx
-import os
-from fastapi import APIRouter, UploadFile, File, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-import tempfile
-import uuid
-import os
-
+import pdfplumber
+from docx import Document
+import base64
+from typing import List, Literal
+from pydantic import BaseModel
+import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
 
 app = FastAPI()
 
@@ -126,9 +112,6 @@ async def ask_with_image(
 
     return {"response": answer}
 
-from typing import List, Literal
-from pydantic import BaseModel
-import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
@@ -138,15 +121,6 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
-
-
-from typing import List, Literal
-from pydantic import BaseModel
-import google.generativeai as genai
-from fastapi import APIRouter, UploadFile, File, FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-import os
-
 
 # Assuming genai.configure is called earlier in your file
 # genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
