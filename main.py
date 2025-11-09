@@ -10,7 +10,7 @@ from docx import Document
 import base64
 from typing import List, Literal
 from pydantic import BaseModel
-import google.generativeai as genai
+from google import genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
