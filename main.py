@@ -1,18 +1,28 @@
-from fastapi import FastAPI, Request, UploadFile, File, Form
+from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage
+import base64
+import pdfplumber
+from docx import Document
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
-import os
+from fastapi import Request
+from fastapi import UploadFile, File, Form
 import httpx
-import pdfplumber
-from docx import Document
-import base64
-from typing import List, Literal
-from pydantic import BaseModel
-from google import genai
+import os
+from fastapi import APIRouter, UploadFile, File, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+import tempfile
+import uuid
+import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
+os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
 
 app = FastAPI()
 
@@ -40,7 +50,7 @@ app.add_middleware(
     allow_headers=["*"],               # allow all headers
 )
 # Gemini model setup
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0)
 
 @app.post("/analyze/image")
 async def analyze_image(file: UploadFile = File(...)):
@@ -67,8 +77,7 @@ async def ask_gemini(request: Request):
     if not prompt:
         return {"message": "Prompt is missing."}
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
-
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
     payload = {
         "contents": [
             {
@@ -113,81 +122,6 @@ async def ask_with_image(
     return {"response": answer}
 
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-class ChatMessage(BaseModel):
-    role: Literal["user", "assistant"]
-    content: str
-
-class ChatRequest(BaseModel):
-    messages: List[ChatMessage]
-
-# Assuming genai.configure is called earlier in your file
-# genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-# --- Pydantic Models for Request Body ---
-
-class ChatMessage(BaseModel):
-    # Role must be "user" or "assistant"
-    role: Literal["user", "assistant"]
-    content: str
-
-
-class ChatRequest(BaseModel):
-    # This list will contain the entire conversation history
-    messages: List[ChatMessage]
-
-
-# --- The FastAPI Endpoint ---
-
-@app.post("/api/mental-support-chat")
-async def mental_support_chat(request: ChatRequest):
-    """
-    Handles a continuous, empathetic mental wellness conversation
-    by sending the full message history to the Gemini model.
-    """
-
-    # 1. Define the System Persona
-    # The system message sets the context and rules for the AI.
-    conversation = [
-        {
-            "role": "system",
-            "content": """
-You are a warm, empathetic mental wellness companion.
-• Speak gently, like a caring friend.
-• Validate emotions and encourage expression.
-• Avoid clinical language and diagnoses.
-• Never suggest medication.
-• Keep responses ~1–3 short paragraphs.
-"""
-        }
-    ]
-
-    # 2. Append Conversation History
-    # The frontend sends 'user' and 'assistant' roles, which map directly to the model's roles.
-    for msg in request.messages:
-        # Note: The Google GenAI SDK expects 'user' and 'model' for multi-turn chat.
-        # Since your Pydantic model uses 'assistant', we map it here:
-        role = "user" if msg.role == "user" else "model"
-        conversation.append({"role": role, "content": msg.content})
-
-    # 3. Call the Gemini Model
-    try:
-        model = genai.GenerativeModel("gemini-2.5-flash")  # Updated to 2.5-flash for better performance/reasoning
-
-        # Generate content with the full history including the system prompt
-        response = model.generate_content(conversation)
-
-        reply_text = response.text.strip() if response else "I'm here for you. Tell me more."
-
-        return {"response": reply_text}
-
-    except Exception as e:
-        print(f"Gemini API Error: {e}")
-        return {"response": "I'm having a little trouble connecting right now. Could you please try again in a moment?"}
-
-
-
 @app.post("/api/ask-with-doc")
 async def ask_with_doc(
         file: UploadFile = File(...),
@@ -222,7 +156,7 @@ async def ask_with_doc(
     full_prompt =  f"You are a helpful healthcare assistant. Answer the following question based on the provided document:\n\n{prompt}\n\n[Document Text]:\n{extracted_text}"
 
     # Gemini API call
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
     payload = {
         "contents": [
             {
