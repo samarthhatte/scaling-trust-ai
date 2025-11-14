@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
+
 import base64
 import pdfplumber
 from docx import Document
@@ -13,16 +14,18 @@ from starlette.templating import Jinja2Templates
 from fastapi import Request
 from fastapi import UploadFile, File, Form
 import httpx
-import os
 from fastapi import APIRouter, UploadFile, File, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import tempfile
 import uuid
 import os
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
+from google import genai
+
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+
 
 app = FastAPI()
 
@@ -177,3 +180,28 @@ async def ask_with_doc(
     )
 
     return {"message": message}
+
+#Mental Support API
+@app.post("/api/mental-support-chat")
+async def mental_support_chat(request: Request):
+    data = await request.json()
+    user_message = data.get("query", "")
+
+    if not user_message.strip():
+        return {"response": "I'm here with you. Could you share what's on your mind?"}
+
+    prompt = [
+        {"role": "system", "content": """
+You are a warm, empathetic mental wellness support companion.
+Your tone is gentle, comforting, and human-like.
+Avoid sounding robotic. Do not diagnose.
+"""},
+        {"role": "user", "content": user_message}
+    ]
+
+    reply = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt
+    )
+
+    return {"response": reply.text.strip()}
