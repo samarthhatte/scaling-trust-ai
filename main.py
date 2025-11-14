@@ -175,24 +175,28 @@ async def ask_with_doc(
 # ================================
 @app.post("/api/mental-support-chat")
 async def mental_support_chat(request: Request):
-    data = await request.json()
-    user_message = data.get("query", "")
+    body = await request.json()
+    user_message = body.get("message")
 
-    if not user_message.strip():
-        return {"response": "I'm here with you. Could you share what's on your mind?"}
+    if not user_message:
+        return {"message": "Message is required"}
 
-    prompt = [
-        {"role": "system", "content": """
-You are a warm, empathetic mental wellness support companion.
-Your tone is gentle, comforting, and human-like.
-Avoid sounding robotic. Do not diagnose.
-"""},
-        {"role": "user", "content": user_message}
-    ]
+    system_prompt = """
+You are a warm, empathetic mental health support companion. 
+Provide emotional support, reflective listening, grounding techniques, and calm guidance.
+Do NOT mention that you are an AI model. Do NOT provide medical advice. Do NOT diagnose.
+"""
 
-    reply = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt
-    )
+    final_prompt = f"{system_prompt}\nUser: {user_message}\nAssistant:"
 
-    return {"response": reply.text.strip()}
+    try:
+        reply = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=final_prompt
+        )
+        ai_reply = reply.text
+        return {"reply": ai_reply}
+
+    except Exception as e:
+        print("Generation error:", e)
+        return {"reply": "Sorry, I couldn't process that."}
