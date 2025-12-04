@@ -13,8 +13,7 @@ from docx import Document
 # Google GenAI SDK (NEW)
 from google import genai
 
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBXTuOEK6RxsCu6RHWf9hE1hfGtZXb0UcU"
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+client = genai.Client()
 
 app = FastAPI()
 
