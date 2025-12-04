@@ -50,7 +50,7 @@ async def analyze_image(file: UploadFile = File(...)):
     image_bytes = await file.read()
 
     reply = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=[
             {
                 "parts": [
@@ -76,7 +76,7 @@ async def ask_gemini(request: Request):
         return {"message": "Prompt is missing."}
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=f"You are a helpful healthcare assistant.\n\n{prompt}"
     )
 
@@ -91,7 +91,7 @@ async def ask_with_image(file: UploadFile = File(...), prompt: str = Form(...)):
     image_bytes = await file.read()
 
     reply = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=[
             {
                 "parts": [
@@ -137,7 +137,7 @@ async def ask_with_doc(file: UploadFile = File(...), prompt: str = Form(...)):
     content = f"You are a helpful healthcare assistant.\n\nQuestion: {prompt}\n\nDocument:\n{extracted}"
 
     reply = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=content
     )
 
@@ -188,7 +188,7 @@ async def mental_support_chat(request: Request):
     final_prompt = f"{system_prompt}\nUser: {user_message}\nAssistant:"
 
     reply = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=final_prompt
     )
 
