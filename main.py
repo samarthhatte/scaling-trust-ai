@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+import firebase_admin
+from firebase_admin import credentials, messaging
+import json
+
 
 import os
 import base64
@@ -16,6 +20,16 @@ from google import genai
 client = genai.Client()
 
 app = FastAPI()
+
+# ======================================
+# FIREBASE INITIALIZATION (FCM)
+# ======================================
+
+if not firebase_admin._apps:
+    cred_json = json.loads(os.environ.get("FIREBASE_SERVICE_ACCOUNT"))
+    cred = credentials.Certificate(cred_json)
+    firebase_admin.initialize_app(cred)
+
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -192,3 +206,34 @@ async def mental_support_chat(request: Request):
     )
 
     return {"reply": reply.text}
+
+# ======================================
+# PUSH NOTIFICATION SERVICE (ADMIN → USERS)
+# ======================================
+@app.post("/send-notification")
+async def send_notification(request: Request):
+    body = await request.json()
+
+    title = body.get("title", "Code Club Alert")
+    message = body.get("body", "New update available!")
+    topic = body.get("topic", "all_members")
+
+    notification = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=message
+        ),
+        android=messaging.AndroidConfig(
+            priority="high",
+            notification=messaging.AndroidNotification(
+                channel_id="club_channel"
+            )
+        ),
+        topic=topic
+    )
+
+    try:
+        response = messaging.send(notification)
+        return {"success": True, "message_id": response}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
