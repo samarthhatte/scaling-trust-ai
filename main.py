@@ -6,6 +6,7 @@ from starlette.templating import Jinja2Templates
 import firebase_admin
 from firebase_admin import credentials, messaging
 import json
+import os, json
 
 
 import os
@@ -20,6 +21,17 @@ from google import genai
 client = genai.Client()
 
 app = FastAPI()
+
+app = FastAPI()
+
+# 🔽 ADD THIS IMMEDIATELY AFTER
+service_account_str = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+
+if service_account_str and not firebase_admin._apps:
+    cred_json = json.loads(service_account_str)
+    cred = credentials.Certificate(cred_json)
+    firebase_admin.initialize_app(cred)
+
 
 # ======================================
 # FIREBASE INITIALIZATION (FCM)
@@ -216,24 +228,23 @@ async def send_notification(request: Request):
 
     title = body.get("title", "Code Club Alert")
     message = body.get("body", "New update available!")
+    image = body.get("image")  # OPTIONAL
     topic = body.get("topic", "all_members")
 
-    notification = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=message
-        ),
+    message_payload = messaging.Message(
+        data={
+            "title": title,
+            "message": message,
+            "image": image or ""   # safe fallback
+        },
         android=messaging.AndroidConfig(
-            priority="high",
-            notification=messaging.AndroidNotification(
-                channel_id="club_channel"
-            )
+            priority="high"
         ),
         topic=topic
     )
 
     try:
-        response = messaging.send(notification)
+        response = messaging.send(message_payload)
         return {"success": True, "message_id": response}
     except Exception as e:
         return {"success": False, "error": str(e)}
