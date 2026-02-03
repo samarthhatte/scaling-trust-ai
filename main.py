@@ -228,18 +228,32 @@ async def send_notification(request: Request):
 
     title = body.get("title", "Code Club Alert")
     message = body.get("body", "New update available!")
-    image = body.get("image")  # OPTIONAL
+    image = body.get("image")  # optional
     topic = body.get("topic", "all_members")
 
+    # ⭐ NEW FIELDS
+    event_id = body.get("eventId")
+    notif_type = body.get("type", "general")
+
     message_payload = messaging.Message(
+
+        # 🔔 What user sees
+        notification=messaging.Notification(
+            title=title,
+            body=message,
+            image=image
+        ),
+
+        # 📦 What app reads on click
         data={
-            "title": title,
-            "message": message,
-            "image": image or ""   # safe fallback
+            "type": notif_type,
+            "eventId": event_id or ""
         },
+
         android=messaging.AndroidConfig(
             priority="high"
         ),
+
         topic=topic
     )
 
