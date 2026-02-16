@@ -269,37 +269,33 @@ async def send_notification(request: Request):
 @app.post("/send-chat-notification")
 async def send_chat_notification(request: Request):
     body = await request.json()
-
-    # Required for private routing
-    recipient_token = body.get("fcmToken") 
-    chat_id = body.get("chatId") # e.g., "UID1_UID2"
+    recipient_token = body.get("fcmToken")
     
-    # Message content
-    sender_name = body.get("senderName", "New Message")
-    message_text = body.get("message", "")
-
-    if not recipient_token or not chat_id:
-        return {"success": False, "error": "Missing token or chatId"}
+    # Get the project ID the server is actually using
+    actual_project_id = messaging.firebase_admin.get_app().project_id
 
     message_payload = messaging.Message(
         notification=messaging.Notification(
-            title=sender_name,
-            body=message_text
+            title=body.get("senderName"),
+            body=body.get("message")
         ),
         data={
             "type": "chat",
-            "chatId": chat_id,
-            "title": sender_name,
-            "message": message_text
+            "chatId": body.get("chatId", "")
         },
-        android=messaging.AndroidConfig(
-            priority="high"
-        ),
         token=recipient_token 
     )
 
     try:
         response = messaging.send(message_payload)
-        return {"success": True, "message_id": response}
+        return {
+            "success": True, 
+            "message_id": response, 
+            "debug_project_id": actual_project_id  # Check this in Postman!
+        }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {
+            "success": False, 
+            "error": str(e), 
+            "debug_project_id": actual_project_id
+        }
