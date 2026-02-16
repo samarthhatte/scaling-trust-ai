@@ -262,3 +262,44 @@ async def send_notification(request: Request):
         return {"success": True, "message_id": response}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+# ======================================
+# PRIVATE NOTIFICATION SERVICE (USER → USER)
+# ======================================
+@app.post("/send-chat-notification")
+async def send_chat_notification(request: Request):
+    body = await request.json()
+
+    # Required for private routing
+    recipient_token = body.get("fcmToken") 
+    chat_id = body.get("chatId") # e.g., "UID1_UID2"
+    
+    # Message content
+    sender_name = body.get("senderName", "New Message")
+    message_text = body.get("message", "")
+
+    if not recipient_token or not chat_id:
+        return {"success": False, "error": "Missing token or chatId"}
+
+    message_payload = messaging.Message(
+        notification=messaging.Notification(
+            title=sender_name,
+            body=message_text
+        ),
+        data={
+            "type": "chat",
+            "chatId": chat_id,
+            "title": sender_name,
+            "message": message_text
+        },
+        android=messaging.AndroidConfig(
+            priority="high"
+        ),
+        token=recipient_token 
+    )
+
+    try:
+        response = messaging.send(message_payload)
+        return {"success": True, "message_id": response}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
