@@ -269,33 +269,41 @@ async def send_notification(request: Request):
 @app.post("/send-chat-notification")
 async def send_chat_notification(request: Request):
     body = await request.json()
-    recipient_token = body.get("fcmToken")
-    
-    # Get the project ID the server is actually using
-    actual_project_id = messaging.firebase_admin.get_app().project_id
 
+    # ✅ Accept token from either key
+    recipient_token = body.get("token") or body.get("fcmToken")
+
+    if not recipient_token:
+        return {
+            "success": False,
+            "error": "Missing FCM token. Provide 'token' or 'fcmToken'."
+        }
+
+    sender_name = body.get("senderName", "Code Club")
+    chat_message = body.get("message", "New message")
+    chat_id = body.get("chatId", "")
+
+    # ✅ Data-only payload (best for custom routing)
     message_payload = messaging.Message(
-        notification=messaging.Notification(
-            title=body.get("senderName"),
-            body=body.get("message")
-        ),
+        token=recipient_token,
         data={
             "type": "chat",
-            "chatId": body.get("chatId", "")
-        },
-        token=recipient_token 
+            "chatId": chat_id,
+            "title": sender_name,
+            "message": chat_message
+        }
     )
 
     try:
         response = messaging.send(message_payload)
+
         return {
-            "success": True, 
-            "message_id": response, 
-            "debug_project_id": actual_project_id  # Check this in Postman!
+            "success": True,
+            "message_id": response
         }
+
     except Exception as e:
         return {
-            "success": False, 
-            "error": str(e), 
-            "debug_project_id": actual_project_id
+            "success": False,
+            "error": str(e)
         }
