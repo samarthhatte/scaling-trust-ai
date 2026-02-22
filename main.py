@@ -228,32 +228,35 @@ async def send_notification(request: Request):
 
     title = body.get("title", "Code Club Alert")
     message = body.get("body", "New update available!")
-    image = body.get("image")  # optional
+    image = body.get("image")
     topic = body.get("topic", "all_members")
-
-    # ⭐ NEW FIELDS
     event_id = body.get("eventId")
     notif_type = body.get("type", "general")
 
     message_payload = messaging.Message(
-
-        # 🔔 What user sees
         notification=messaging.Notification(
             title=title,
             body=message,
             image=image
         ),
-
-        # 📦 What app reads on click
         data={
             "type": notif_type,
             "eventId": event_id or ""
         },
-
+        # 🔥 Optimization: High Priority + Power Management Bypass
         android=messaging.AndroidConfig(
-            priority="high"
+            priority="high",
+            notification=messaging.AndroidNotification(
+                channel_id="club_channel", # Ensures it hits the right channel
+                sound="default"
+            )
         ),
-
+        # APNS for iOS (if applicable)
+        apns=messaging.APNSConfig(
+            payload=messaging.APNSPayload(
+                aps=messaging.Aps(content_available=True)
+            )
+        ),
         topic=topic
     )
 
@@ -270,40 +273,40 @@ async def send_notification(request: Request):
 async def send_chat_notification(request: Request):
     body = await request.json()
 
-    # ✅ Accept token from either key
     recipient_token = body.get("token") or body.get("fcmToken")
-
     if not recipient_token:
-        return {
-            "success": False,
-            "error": "Missing FCM token. Provide 'token' or 'fcmToken'."
-        }
+        return {"success": False, "error": "Missing token"}
 
     sender_name = body.get("senderName", "Code Club")
     chat_message = body.get("message", "New message")
     chat_id = body.get("chatId", "")
 
-    # ✅ Data-only payload (best for custom routing)
+    # ✅ Optimized for Chat: Direct Token + High Priority
     message_payload = messaging.Message(
         token=recipient_token,
+        # We add a notification object to ensure it pops up even if the app is in the background
+        notification=messaging.Notification(
+            title=sender_name,
+            body=chat_message
+        ),
         data={
             "type": "chat",
             "chatId": chat_id,
             "title": sender_name,
             "message": chat_message
-        }
+        },
+        android=messaging.AndroidConfig(
+            priority="high", # 🔥 ESSENTIAL FOR CHAT SPEED
+            notification=messaging.AndroidNotification(
+                channel_id="club_channel",
+                click_action="TOP_LEVEL_CHAT" # Helps Android OS prioritize intent
+            )
+        ),
+        topic=None # Token-based delivery shouldn't have a topic
     )
 
     try:
         response = messaging.send(message_payload)
-
-        return {
-            "success": True,
-            "message_id": response
-        }
-
+        return {"success": True, "message_id": response}
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
