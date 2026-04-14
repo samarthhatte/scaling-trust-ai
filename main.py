@@ -310,3 +310,51 @@ async def send_chat_notification(request: Request):
         return {"success": True, "message_id": response}
     except Exception as e:
         return {"success": False, "error": str(e)}
+    
+@app.post("/send-agro-notification")
+async def send_agro_notification(request: Request):
+    body = await request.json()
+
+    # 1. Extract Data
+    title = body.get("title", "Revolve Agro Update")
+    message = body.get("body", "Check out the latest update!")
+    image = body.get("image")
+    
+    # 🔥 Use a unique topic for this app to avoid cross-app notifications
+    topic = "agro_members" 
+    
+    # These help the Flutter app decide how to display the UI
+    notif_type = body.get("type", "simple") 
+    product_id = body.get("id", "")
+
+    # 2. Build the Payload
+    message_payload = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=message,
+            image=image
+        ),
+        data={
+            "type": notif_type,
+            "productId": product_id,
+            "click_action": "FLUTTER_NOTIFICATION_CLICK"
+        },
+        android=messaging.AndroidConfig(
+            priority="high",
+            notification=messaging.AndroidNotification(
+                # 🔥 MUST match the channel ID created in Flutter main.dart
+                channel_id="agro_channel", 
+                sound="default",
+                icon="stock_ticker_update", # Optional: your app icon name
+                color="#2F6A3E" # Revolve Agro Green
+            )
+        ),
+        topic=topic
+    )
+
+    # 3. Send
+    try:
+        response = messaging.send(message_payload)
+        return {"success": True, "message_id": response, "topic": topic}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
